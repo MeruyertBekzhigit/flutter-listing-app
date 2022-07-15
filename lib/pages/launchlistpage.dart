@@ -22,7 +22,7 @@ class LaunchListPage extends StatelessWidget {
     print(fetchedLaunches.length);
     return fetchedLaunches;
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,12 +35,41 @@ class LaunchListPage extends StatelessWidget {
            return Container(
              margin: EdgeInsets.all(20),
              height: 100,
-             child: ListTile(
-                      leading: Icon(Icons.map),
-                      title: Text(launches[index].name),
-                      subtitle: Text(launches[index].date),
-                      trailing: Icon(star)
-                  ),
+             child: Row(
+               children: [
+                 const Icon(
+                   Icons.auto_graph,
+                   color: Colors.grey,
+                   size: 24.0
+                 ),
+                  Column(
+                   children: [
+                     const Text(
+                       "launches[index].name",
+                       style: TextStyle(
+                         fontSize: 16,
+                         color: Colors.black,
+                         fontWeight: FontWeight.w700,
+                       ),
+                     ),
+                     const Text(
+                       "launches[index].date",
+                       style: TextStyle(
+                         fontSize: 16,
+                         color: Colors.black,
+                         fontWeight: FontWeight.w700,
+                       ),
+                     ),
+                   ],
+                 ),
+                 const IconButton(
+                   icon: Icon(Icons.stars_sharp),
+                   tooltip: 'Search',
+                   color: Colors.yellow,
+                   onPressed: null,
+                 ),
+               ],
+             ),
            );
           }
         ),
