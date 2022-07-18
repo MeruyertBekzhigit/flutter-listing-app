@@ -32,44 +32,17 @@ class LaunchListPage extends StatelessWidget {
         body: ListView.builder(
          itemCount: launches.length,
           itemBuilder: (BuildContext ctx, int index) {
-           return Container(
-             margin: EdgeInsets.all(20),
-             height: 100,
-             child: Row(
-               children: [
-                 const Icon(
-                   Icons.auto_graph,
-                   color: Colors.grey,
-                   size: 24.0
-                 ),
-                  Column(
-                   children: [
-                     const Text(
-                       "launches[index].name",
-                       style: TextStyle(
-                         fontSize: 16,
-                         color: Colors.black,
-                         fontWeight: FontWeight.w700,
-                       ),
-                     ),
-                     const Text(
-                       "launches[index].date",
-                       style: TextStyle(
-                         fontSize: 16,
-                         color: Colors.black,
-                         fontWeight: FontWeight.w700,
-                       ),
-                     ),
-                   ],
-                 ),
-                 const IconButton(
-                   icon: Icon(Icons.stars_sharp),
-                   tooltip: 'Search',
-                   color: Colors.yellow,
-                   onPressed: null,
-                 ),
-               ],
+           return ListTile(
+             leading: Icon(Icons.auto_graph),
+             title: Text(launches[index].name),
+             subtitle: Text(launches[index].date),
+             trailing:  const IconButton(
+               icon: Icon(Icons.stars_sharp),
+               tooltip: 'Search',
+               color: Colors.yellow,
+               onPressed: null,
              ),
+               onTap: () { /* react to the tile being tapped */ print("CELL IS TAPPED"); }
            );
           }
         ),
