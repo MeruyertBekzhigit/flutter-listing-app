@@ -6,9 +6,17 @@ import 'package:http/http.dart' as http;
 
 import '../models/launch.dart';
 
-class LaunchListPage extends StatelessWidget {
+class LaunchListPage extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return new LaunchListPageState();
+  }
+}
+
+class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
   List<Launch> launches = Utils.getMockedLaunches();
+  var isSelectedAsFavourite = false;
 
   Future getLaunchData() async {
     var response = await http.get(Uri.https('api.spacexdata.com', 'v4/launches'));
@@ -19,7 +27,6 @@ class LaunchListPage extends StatelessWidget {
       Launch launch = Launch(name: data['name'], date: data['date_utc'], payloadNumber: data['payloads']);
       fetchedLaunches.add(launch);
     }
-    print(fetchedLaunches.length);
     return fetchedLaunches;
   }
 
@@ -33,14 +40,24 @@ class LaunchListPage extends StatelessWidget {
          itemCount: launches.length,
           itemBuilder: (BuildContext ctx, int index) {
            return ListTile(
-             leading: Icon(Icons.auto_graph),
+             leading: Icon(
+                 Icons.auto_graph,
+                  size: 50,
+             ),
              title: Text(launches[index].name),
              subtitle: Text(launches[index].date),
-             trailing:  const IconButton(
+             trailing: IconButton(
                icon: Icon(Icons.stars_sharp),
                tooltip: 'Search',
-               color: Colors.yellow,
-               onPressed: null,
+               iconSize: 32.0,
+               color: (isSelectedAsFavourite) ? Colors.amber : Colors.grey,
+               onPressed: () {
+                 setState(() //<--whenever icon is pressed, force redraw the widget
+                 {
+                   print("Star is tapped");
+                   isSelectedAsFavourite = !isSelectedAsFavourite;
+                 });
+               },
              ),
                onTap: () { /* react to the tile being tapped */ print("CELL IS TAPPED"); }
            );
