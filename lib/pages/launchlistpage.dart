@@ -33,15 +33,17 @@ class LaunchListPageState extends State<LaunchListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xffe5e8e8),
         appBar: AppBar(
           title: const Text('SpaceX launches'),
+          backgroundColor: Colors.black,
         ),
         body: ListView.builder(
          itemCount: launches.length,
           itemBuilder: (BuildContext ctx, int index) {
            return Container(
-             color: const Color(0xffe0e0e0),
-             margin: const EdgeInsets.only(left: 10, right: 10),
+             color: const Color(0xffbbbcbd),
+             margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
              padding: const EdgeInsets.only(left: 5, top: 20, right: 5, bottom: 10),
              child: ListTile(
                  leading: const Icon(
