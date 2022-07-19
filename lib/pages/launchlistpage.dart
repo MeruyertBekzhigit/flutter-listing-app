@@ -39,27 +39,70 @@ class LaunchListPageState extends State<LaunchListPage> {
         body: ListView.builder(
          itemCount: launches.length,
           itemBuilder: (BuildContext ctx, int index) {
-           return ListTile(
-             leading: Icon(
-                 Icons.auto_graph,
-                  size: 50,
+           return Container(
+             color: const Color(0xffe0e0e0),
+             margin: const EdgeInsets.only(left: 10, right: 10),
+             padding: const EdgeInsets.only(left: 5, top: 20, right: 5, bottom: 10),
+             child: ListTile(
+                 leading: const Icon(
+                   Icons.auto_graph,
+                   size: 50,
+                 ),
+                 title: Text(
+                   launches[index].name,
+                   style: const TextStyle(
+                       fontWeight: FontWeight.bold,
+                       color: Colors.black
+                   ),
+                 ),
+                 subtitle: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: <Widget>[
+                     const SizedBox(height: 10),
+                     Text(
+                       launches[index].date,
+                       style: const TextStyle(
+                           fontWeight: FontWeight.normal,
+                           color: Colors.black
+                       ),
+                     ),
+                     Row(
+                       children: <Widget>[
+                         const Text(
+                           "Payload count: 12",
+                           style: TextStyle(
+                               fontWeight: FontWeight.normal,
+                               color: Colors.black
+                           ),
+                         ),
+                         const SizedBox(width: 70),
+                         IconButton(
+                           onPressed: () {},
+                           icon: const Icon(
+                               Icons.arrow_downward,
+                               size: 30,
+                               color: Colors.black
+                           ),
+                         )
+                       ],
+                     )
+                   ],
+                 ),
+                 trailing: IconButton(
+                   icon: const Icon(Icons.stars_sharp),
+                   tooltip: 'Search',
+                   iconSize: 32.0,
+                   color: (isSelectedAsFavourite) ? Colors.amber : Colors.grey,
+                   onPressed: () {
+                     setState(() //<--whenever icon is pressed, force redraw the widget
+                     {
+                       isSelectedAsFavourite = !isSelectedAsFavourite;
+                     }
+                     );
+                   },
+                 ),
+                 onTap: () { /* react to the tile being tapped */ print("CELL IS TAPPED"); }
              ),
-             title: Text(launches[index].name),
-             subtitle: Text(launches[index].date),
-             trailing: IconButton(
-               icon: Icon(Icons.stars_sharp),
-               tooltip: 'Search',
-               iconSize: 32.0,
-               color: (isSelectedAsFavourite) ? Colors.amber : Colors.grey,
-               onPressed: () {
-                 setState(() //<--whenever icon is pressed, force redraw the widget
-                 {
-                   print("Star is tapped");
-                   isSelectedAsFavourite = !isSelectedAsFavourite;
-                 });
-               },
-             ),
-               onTap: () { /* react to the tile being tapped */ print("CELL IS TAPPED"); }
            );
           }
         ),
