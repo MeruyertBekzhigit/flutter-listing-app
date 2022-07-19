@@ -17,6 +17,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
   List<Launch> launches = Utils.getMockedLaunches();
   var isSelectedAsFavourite = false;
+  int _selectedIndex = 0;
 
   Future getLaunchData() async {
     var response = await http.get(Uri.https('api.spacexdata.com', 'v4/launches'));
@@ -46,6 +47,7 @@ class LaunchListPageState extends State<LaunchListPage> {
              margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
              padding: const EdgeInsets.only(left: 5, top: 20, right: 5, bottom: 10),
              child: ListTile(
+                 selected: index == _selectedIndex,
                  leading: const Icon(
                    Icons.auto_graph,
                    size: 50,
@@ -98,7 +100,8 @@ class LaunchListPageState extends State<LaunchListPage> {
                    onPressed: () {
                      setState(() //<--whenever icon is pressed, force redraw the widget
                      {
-                       isSelectedAsFavourite = !isSelectedAsFavourite;
+                       _selectedIndex = index;
+                       isSelectedAsFavourite  = !isSelectedAsFavourite;
                      }
                      );
                    },
