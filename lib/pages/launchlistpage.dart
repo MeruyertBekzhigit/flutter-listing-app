@@ -93,7 +93,10 @@ class LaunchListPageState extends State<LaunchListPage> {
                      ),
                      onTap: () { /* react to the tile being tapped */ print("CELL IS TAPPED"); }
                  ),
-                 buildExpansionPanel(context),
+                   Container(
+                     color: Colors.white,
+                     child: buildExpansionPanel(context),
+                   ),
                ],
              )
            );
@@ -104,11 +107,23 @@ class LaunchListPageState extends State<LaunchListPage> {
 
   @override
   Widget buildExpansionPanel(BuildContext context) => const ExpansionTile(
-    title: Text('Payload count: 12'),
+    title: Text('Payload count: 2'),
     children: [
       Text(
         'RazakSAT',
-        style: TextStyle(fontSize: 18, height: 1.4),
+        style: TextStyle(
+          fontSize: 16,
+          height: 1.4,
+        ),
+        textAlign: TextAlign.left,
+      ),
+      Text(
+        'PreSAT',
+        style: TextStyle(
+          fontSize: 16,
+          height: 1.4,
+        ),
+        textAlign: TextAlign.left,
       )
     ],
   );
