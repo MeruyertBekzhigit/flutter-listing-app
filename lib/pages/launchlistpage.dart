@@ -34,6 +34,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
   late Future<Launch> futureLaunch;
   List<Launch> launches = Utils.getMockedLaunches();
+  var loading = true;
 
   @override
   void initState() {
@@ -49,19 +50,20 @@ class LaunchListPageState extends State<LaunchListPage> {
         title: const Text('SpaceX launches'),
         backgroundColor: Colors.black,
       ),
-      body: ListView.builder(
-          itemCount: launches.length,
-          itemBuilder: (BuildContext ctx, int index) {
-            return Container(
-              color: const Color(0xffbbbcbd),
-              margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
-              padding:
-                  const EdgeInsets.only(left: 5, top: 20, right: 5, bottom: 10),
-              child: FutureBuilder<Launch>(
-                  future: futureLaunch,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return ListTile(
+      body: FutureBuilder<Launch>(
+        future: futureLaunch,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+                itemCount: launches.length,
+                itemBuilder: (BuildContext ctx, int index) {
+                  return Container(
+                      color: const Color(0xffbbbcbd),
+                      margin:
+                          const EdgeInsets.only(left: 10, right: 10, top: 5),
+                      padding: const EdgeInsets.only(
+                          left: 5, top: 20, right: 5, bottom: 10),
+                      child: ListTile(
                           leading: const Icon(
                             Icons.auto_graph,
                             size: 50,
@@ -72,18 +74,29 @@ class LaunchListPageState extends State<LaunchListPage> {
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black),
                           ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.stars_sharp),
+                            iconSize: 32.0,
+                            color: Colors.grey,
+                            onPressed: () {
+                              setState(
+                                  () //<--whenever icon is pressed, force redraw the widget
+                                  {});
+                            },
+                          ),
                           onTap: () {
                             /* react to the tile being tapped */
-                          });
-                    } else if (snapshot.hasError) {
-                      return Text('${snapshot.error}');
-                    }
-
-                    // By default, show a loading spinner.
-                    return const CircularProgressIndicator();
-                  }),
-            );
-          }),
+                          }));
+                });
+          } else if (snapshot.hasError) {
+            return Text('${snapshot.error}');
+          }
+          return const Center(
+              child: CircularProgressIndicator(
+            color: Colors.grey,
+          ));
+        },
+      ),
     );
   }
 }
