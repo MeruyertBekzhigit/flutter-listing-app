@@ -14,9 +14,8 @@ Future<List<Launch>> getLaunchData() async {
   if (response.statusCode == 200) {
     var decodedFilteredLaunch = jsonDecode(response.body);
     List<dynamic> jsonResponse = decodedFilteredLaunch;
-    List<Launch> launches = jsonResponse
-        .map((json) => Launch.fromJson(json))
-        .toList();
+    List<Launch> launches =
+        jsonResponse.map((json) => Launch.fromJson(json)).toList();
 
     return launches;
   } else {
@@ -37,6 +36,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
   List<Launch> mockLaunches = Utils.getMockedLaunches();
   late Future<List<Launch>> realtimeLaunches;
+  List<Launch> favoriteLaunches = [];
 
   @override
   void initState() {
@@ -61,6 +61,8 @@ class LaunchListPageState extends State<LaunchListPage> {
                 itemCount: launches.length,
                 itemBuilder: (BuildContext ctx, int index) {
                   Launch launchItem = launches[index];
+                  bool isAmongFavourites =
+                      favoriteLaunches.contains(launchItem);
 
                   return Container(
                       color: const Color(0xffbbbcbd),
@@ -82,16 +84,17 @@ class LaunchListPageState extends State<LaunchListPage> {
                           trailing: IconButton(
                             icon: const Icon(Icons.stars_sharp),
                             iconSize: 32.0,
-                            color: Colors.grey,
+                            color:
+                                isAmongFavourites ? Colors.amber : Colors.grey,
                             onPressed: () {
-                              setState(
-                                  () //<--whenever icon is pressed, force redraw the widget
-                                  {});
+                              setState(() {
+                                isAmongFavourites
+                                    ? favoriteLaunches.remove(launchItem)
+                                    : favoriteLaunches.add(launchItem);
+                              });
                             },
                           ),
-                          onTap: () {
-                            /* react to the tile being tapped */
-                          }));
+                          onTap: () {}));
                 });
           } else if (snapshot.hasError) {
             return Text('${snapshot.error}');
