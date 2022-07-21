@@ -15,45 +15,61 @@ class LaunchListPage extends StatefulWidget {
 
 class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
+  late Future<Launch> futureLaunch;
   List<Launch> launches = Utils.getMockedLaunches();
+
+  @override
+  void initState() {
+    super.initState();
+    futureLaunch = getLaunchData();
+  }
+
+  Future<Launch> getLaunchData() async {
+    final response = await http
+        .get(Uri.parse('https://api.spacexdata.com/v4/launches'));
+
+    if (response.statusCode == 200) {
+        return Launch.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load launches');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffe5e8e8),
-        appBar: AppBar(
-          title: const Text('SpaceX launches'),
-          backgroundColor: Colors.black,
-        ),
-        body: ListView.builder(
-         itemCount: launches.length,
+      appBar: AppBar(
+        title: const Text('SpaceX launches'),
+        backgroundColor: Colors.black,
+      ),
+      body: ListView.builder(
+          itemCount: launches.length,
           itemBuilder: (BuildContext ctx, int index) {
-           return Container(
-             color: const Color(0xffbbbcbd),
-             margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
-             padding: const EdgeInsets.only(left: 5, top: 20, right: 5, bottom: 10),
-             child: Column(
-               children: [
-                 ListTile(
-                     leading: const Icon(
-                       Icons.auto_graph,
-                       size: 50,
-                     ),
-                     title: Text(
-                       launches[index].name,
-                       style: const TextStyle(
-                           fontWeight: FontWeight.bold,
-                           color: Colors.black
-                       ),
-                     ),
-                     onTap: () { /* react to the tile being tapped */ print("CELL IS TAPPED"); }
-                 ),
-               ],
-             )
-           );
-          }
-        ),
-      );
+            return Container(
+                color: const Color(0xffbbbcbd),
+                margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
+                padding: const EdgeInsets.only(
+                    left: 5, top: 20, right: 5, bottom: 10),
+                child: Column(
+                  children: [
+                    ListTile(
+                        leading: const Icon(
+                          Icons.auto_graph,
+                          size: 50,
+                        ),
+                        title: Text(
+                          launches[index].name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
+                        onTap: () {
+                          /* react to the tile being tapped */ print(
+                              "CELL IS TAPPED");
+                        }),
+                  ],
+                ));
+          }),
+    );
   }
 }
-
