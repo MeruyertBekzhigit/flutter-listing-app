@@ -7,15 +7,18 @@ import 'package:http/http.dart' as http;
 
 import '../models/launch.dart';
 
-Future<Launch> getLaunchData() async {
+Future<List<Launch>> getLaunchData() async {
   final response =
       await http.get(Uri.parse('https://api.spacexdata.com/v4/launches'));
 
   if (response.statusCode == 200) {
     var decodedFilteredLaunch = jsonDecode(response.body);
-    var firstElement = decodedFilteredLaunch[0];
-    Map<String, dynamic> launchMap = firstElement;
-    return Launch.fromJson(launchMap);
+    List<dynamic> jsonResponse = decodedFilteredLaunch;
+    List<Launch> launches = jsonResponse
+        .map((json) => Launch.fromJson(json))
+        .toList();
+
+    return launches;
   } else {
     throw Exception('Failed to load launches');
   }
@@ -32,13 +35,12 @@ class LaunchListPage extends StatefulWidget {
 
 class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
-  late Future<Launch> futureLaunch;
-  List<Launch> launches = Utils.getMockedLaunches();
-  var loading = true;
+  List<Launch> mockLaunches = Utils.getMockedLaunches();
+  late Future<List<Launch>> realtimeLaunches;
 
   @override
   void initState() {
-    futureLaunch = getLaunchData();
+    realtimeLaunches = getLaunchData();
     super.initState();
   }
 
@@ -50,13 +52,16 @@ class LaunchListPageState extends State<LaunchListPage> {
         title: const Text('SpaceX launches'),
         backgroundColor: Colors.black,
       ),
-      body: FutureBuilder<Launch>(
-        future: futureLaunch,
-        builder: (context, snapshot) {
+      body: FutureBuilder<List<Launch>>(
+        future: realtimeLaunches,
+        builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
+            var launches = snapshot.data as List<Launch>;
             return ListView.builder(
                 itemCount: launches.length,
                 itemBuilder: (BuildContext ctx, int index) {
+                  Launch launchItem = launches[index];
+
                   return Container(
                       color: const Color(0xffbbbcbd),
                       margin:
@@ -69,7 +74,7 @@ class LaunchListPageState extends State<LaunchListPage> {
                             size: 50,
                           ),
                           title: Text(
-                            snapshot.data!.name,
+                            launchItem.name,
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black),
