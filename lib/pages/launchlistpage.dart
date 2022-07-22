@@ -36,7 +36,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
   List<Launch> mockLaunches = Utils.getMockedLaunches();
   late Future<List<Launch>> realtimeLaunches;
-  List<Launch> favoriteLaunches = [];
+  List<String> favoriteLaunches = [];
 
   @override
   void initState() {
@@ -62,7 +62,7 @@ class LaunchListPageState extends State<LaunchListPage> {
                 itemBuilder: (BuildContext ctx, int index) {
                   Launch launchItem = launches[index];
                   bool isAmongFavourites =
-                      favoriteLaunches.contains(launchItem);
+                      favoriteLaunches.contains(launchItem.id);
                   return Container(
                       color: const Color(0xffbbbcbd),
                       margin:
@@ -88,8 +88,8 @@ class LaunchListPageState extends State<LaunchListPage> {
                             onPressed: () {
                               setState(() {
                                 isAmongFavourites
-                                    ? favoriteLaunches.remove(launchItem)
-                                    : favoriteLaunches.add(launchItem);
+                                    ? favoriteLaunches.remove(launchItem.id)
+                                    : favoriteLaunches.add(launchItem.id);
                               });
                             },
                           ),
