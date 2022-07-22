@@ -4,10 +4,10 @@ part 'payload.g.dart';
 
 @JsonSerializable()
 class Payload {
-  String name;
-  String type;
+  final String name;
+  final String type;
 
-  Payload({this.name = "", this.type = ""});
+  const Payload({required this.name, required this.type});
 
   factory Payload.fromJson(Map<String, dynamic> json) =>
       _$PayloadFromJson(json);

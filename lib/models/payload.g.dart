@@ -7,8 +7,8 @@ part of 'payload.dart';
 // **************************************************************************
 
 Payload _$PayloadFromJson(Map<String, dynamic> json) => Payload(
-      name: json['name'] as String? ?? "",
-      type: json['type'] as String? ?? "",
+      name: json['name'] as String,
+      type: json['type'] as String,
     );
 
 Map<String, dynamic> _$PayloadToJson(Payload instance) => <String, dynamic>{

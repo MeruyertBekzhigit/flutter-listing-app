@@ -6,6 +6,7 @@ import 'package:sample_listing_app/helpers/utils.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/launch.dart';
+import '../models/payload.dart';
 
 Future<List<Launch>> getLaunchData() async {
   final response =
@@ -20,6 +21,22 @@ Future<List<Launch>> getLaunchData() async {
     return launches;
   } else {
     throw Exception('Failed to load launches');
+  }
+}
+
+Future<List<Payload>> getPayloadData(String id) async {
+  final response =
+      await http.get(Uri.parse('https://api.spacexdata.com/v4/payloads/${id}'));
+
+  if (response.statusCode == 200) {
+    var decodedFilteredLaunch = jsonDecode(response.body);
+    List<dynamic> jsonResponse = decodedFilteredLaunch;
+    List<Payload> payloads =
+        jsonResponse.map((json) => Payload.fromJson(json)).toList();
+
+    return payloads;
+  } else {
+    throw Exception('Failed to load payloads');
   }
 }
 
