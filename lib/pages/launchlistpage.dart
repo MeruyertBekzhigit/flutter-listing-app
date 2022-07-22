@@ -56,14 +56,13 @@ class LaunchListPageState extends State<LaunchListPage> {
         future: realtimeLaunches,
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            var launches = snapshot.data as List<Launch>;
+            final launches = snapshot.data as List<Launch>;
             return ListView.builder(
                 itemCount: launches.length,
                 itemBuilder: (BuildContext ctx, int index) {
                   Launch launchItem = launches[index];
                   bool isAmongFavourites =
                       favoriteLaunches.contains(launchItem);
-
                   return Container(
                       color: const Color(0xffbbbcbd),
                       margin:
