@@ -68,7 +68,7 @@ class LaunchListPageState extends State<LaunchListPage> {
                   itemCount: launches.length,
                   itemBuilder: (BuildContext ctx, int index) {
                     Launch launchItem = launches[index];
-                    bool isAmongFavourites =
+                    bool isMarkedAsFavourite =
                         favoriteLaunchIds.contains(launchItem.id);
                     return Container(
                         color: const Color(0xffbbbcbd),
@@ -90,14 +90,13 @@ class LaunchListPageState extends State<LaunchListPage> {
                             trailing: IconButton(
                               icon: const Icon(Icons.stars_sharp),
                               iconSize: 32.0,
-                              color: isAmongFavourites
+                              color: isMarkedAsFavourite
                                   ? Colors.amber
                                   : Colors.grey,
                               onPressed: () {
                                 setState(() {
-                                  isAmongFavourites
-                                      ? favoriteLaunchIds.remove(launchItem.id)
-                                      : favoriteLaunchIds.add(launchItem.id);
+                                  toggleFavorites(
+                                      isMarkedAsFavourite, launchItem.id);
                                 });
                               },
                             ),
@@ -124,8 +123,11 @@ class LaunchListPageState extends State<LaunchListPage> {
         },
       ),
     );
+  }
 
-    //extract toogle for favouriteid
-    //extract methods for present success, error, loading
+  void toggleFavorites(bool isMarkedAsFavorite, String id) {
+    isMarkedAsFavorite
+        ? favoriteLaunchIds.remove(id)
+        : favoriteLaunchIds.add(id);
   }
 }
