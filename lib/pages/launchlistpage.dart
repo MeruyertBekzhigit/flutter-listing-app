@@ -1,44 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:sample_listing_app/helpers/api_service.dart';
 import 'package:sample_listing_app/helpers/utils.dart';
-import 'package:http/http.dart' as http;
 
 import '../models/launch.dart';
-import '../models/payload.dart';
-
-Future<List<Launch>> getLaunchData() async {
-  final response =
-      await http.get(Uri.parse('https://api.spacexdata.com/v4/launches'));
-
-  if (response.statusCode == 200) {
-    var decodedFilteredLaunch = jsonDecode(response.body);
-    List<dynamic> jsonResponse = decodedFilteredLaunch;
-    List<Launch> launches =
-        jsonResponse.map((json) => Launch.fromJson(json)).toList();
-
-    return launches;
-  } else {
-    throw Exception('Failed to load launches');
-  }
-}
-
-Future<List<Payload>> getPayloadData(String id) async {
-  final response =
-      await http.get(Uri.parse('https://api.spacexdata.com/v4/payloads/${id}'));
-
-  if (response.statusCode == 200) {
-    var decodedFilteredLaunch = jsonDecode(response.body);
-    List<dynamic> jsonResponse = decodedFilteredLaunch;
-    List<Payload> payloads =
-        jsonResponse.map((json) => Payload.fromJson(json)).toList();
-
-    return payloads;
-  } else {
-    throw Exception('Failed to load payloads');
-  }
-}
 
 class LaunchListPage extends StatefulWidget {
   const LaunchListPage({Key? key}) : super(key: key);
@@ -53,12 +19,17 @@ class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
   List<Launch> mockLaunches = Utils.getMockedLaunches();
   late Future<List<Launch>> realtimeLaunches;
-  List<Launch> favoriteLaunches = [];
+  List<String> favoriteLaunchIds = [];
+  ApiService api = MockAPI();
 
   @override
   void initState() {
-    realtimeLaunches = getLaunchData();
+    loadAndStoreLaunches();
     super.initState();
+  }
+
+  void loadAndStoreLaunches() {
+    realtimeLaunches = api.getLaunches();
   }
 
   @override
@@ -70,58 +41,91 @@ class LaunchListPageState extends State<LaunchListPage> {
         backgroundColor: Colors.black,
       ),
       body: FutureBuilder<List<Launch>>(
-        future: realtimeLaunches,
-        builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.hasData) {
-            var launches = snapshot.data as List<Launch>;
-            return ListView.builder(
-                itemCount: launches.length,
-                itemBuilder: (BuildContext ctx, int index) {
-                  Launch launchItem = launches[index];
-                  bool isAmongFavourites =
-                      favoriteLaunches.contains(launchItem);
-
-                  return Container(
-                      color: const Color(0xffbbbcbd),
-                      margin:
-                          const EdgeInsets.only(left: 10, right: 10, top: 5),
-                      padding: const EdgeInsets.only(
-                          left: 5, top: 20, right: 5, bottom: 10),
-                      child: ListTile(
-                          leading: const Icon(
-                            Icons.auto_graph,
-                            size: 50,
-                          ),
-                          title: Text(
-                            launchItem.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.stars_sharp),
-                            iconSize: 32.0,
-                            color:
-                                isAmongFavourites ? Colors.amber : Colors.grey,
-                            onPressed: () {
-                              setState(() {
-                                isAmongFavourites
-                                    ? favoriteLaunches.remove(launchItem)
-                                    : favoriteLaunches.add(launchItem);
-                              });
-                            },
-                          ),
-                          onTap: () {}));
+          future: realtimeLaunches,
+          builder: (context, AsyncSnapshot snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasData) {
+                final launches = snapshot.data as List<Launch>;
+                return buildLaunchLoadingSuccessWidget(context, launches);
+              } else {
+                return ExtractedLoadingErrorWidget(onTap: () {
+                  setState(() {
+                    loadAndStoreLaunches();
+                  });
                 });
-          } else if (snapshot.hasError) {
-            return Text('${snapshot.error}');
-          }
-          return const Center(
-              child: CircularProgressIndicator(
-            color: Colors.grey,
-          ));
-        },
-      ),
+              }
+            } else {
+              return buildLaunchLoadingWidget(context);
+            }
+          }),
     );
+  }
+
+  Widget buildLaunchLoadingSuccessWidget(
+          BuildContext context, List<Launch> launches) =>
+      ListView.builder(
+          itemCount: launches.length,
+          itemBuilder: (BuildContext ctx, int index) {
+            Launch launchItem = launches[index];
+            bool isMarkedAsFavourite =
+                favoriteLaunchIds.contains(launchItem.id);
+            return Container(
+                color: const Color(0xffbbbcbd),
+                margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
+                padding: const EdgeInsets.only(
+                    left: 5, top: 20, right: 5, bottom: 10),
+                child: ListTile(
+                    leading: const Icon(
+                      Icons.auto_graph,
+                      size: 50,
+                    ),
+                    title: Text(
+                      launchItem.name,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.stars_sharp),
+                      iconSize: 32.0,
+                      color: isMarkedAsFavourite ? Colors.amber : Colors.grey,
+                      onPressed: () {
+                        setState(() {
+                          toggleFavorites(isMarkedAsFavourite, launchItem.id);
+                        });
+                      },
+                    ),
+                    onTap: () {}));
+          });
+
+  Widget buildLaunchLoadingWidget(BuildContext context) => const Center(
+        child: CircularProgressIndicator(color: Colors.grey),
+      );
+
+  void toggleFavorites(bool isMarkedAsFavorite, String id) {
+    isMarkedAsFavorite
+        ? favoriteLaunchIds.remove(id)
+        : favoriteLaunchIds.add(id);
+  }
+}
+
+class ExtractedLoadingErrorWidget extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const ExtractedLoadingErrorWidget({
+    Key? key,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: InkWell(
+            child: const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Text("Unexpected error occurred. Please tap to retry"),
+            ),
+            onTap: () {
+              onTap();
+            }));
   }
 }

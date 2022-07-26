@@ -7,6 +7,7 @@ part 'launch.g.dart';
 
 @JsonSerializable()
 class Launch {
+  final String id;
   final String name;
   final List<String> payloads;
 
@@ -14,7 +15,10 @@ class Launch {
   final String date;
 
   const Launch(
-      {required this.name, required this.date, required this.payloads});
+      {required this.id,
+      required this.name,
+      required this.date,
+      required this.payloads});
 
   /// A necessary factory constructor for creating a new User instance
   /// from a map. Pass the map to the generated `_$LaunchFromJson()` constructor.
