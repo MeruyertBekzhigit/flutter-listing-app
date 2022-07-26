@@ -1,28 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:sample_listing_app/helpers/api_service.dart';
 import 'package:sample_listing_app/helpers/utils.dart';
-import 'package:http/http.dart' as http;
 
 import '../models/launch.dart';
-
-Future<List<Launch>> getLaunchData() async {
-  final response =
-      await http.get(Uri.parse('https://api.spacexdata.com/v4/launchest'));
-
-  if (response.statusCode == 200) {
-    var decodedFilteredLaunch = jsonDecode(response.body);
-    List<dynamic> jsonResponse = decodedFilteredLaunch;
-    List<Launch> launches =
-        jsonResponse.map((json) => Launch.fromJson(json)).toList();
-
-    return launches;
-  } else {
-    throw Exception('Failed to load launches');
-  }
-}
 
 class LaunchListPage extends StatefulWidget {
   const LaunchListPage({Key? key}) : super(key: key);
@@ -59,75 +41,91 @@ class LaunchListPageState extends State<LaunchListPage> {
         backgroundColor: Colors.black,
       ),
       body: FutureBuilder<List<Launch>>(
-        future: realtimeLaunches,
-        builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasData) {
-              final launches = snapshot.data as List<Launch>;
-              return ListView.builder(
-                  itemCount: launches.length,
-                  itemBuilder: (BuildContext ctx, int index) {
-                    Launch launchItem = launches[index];
-                    bool isMarkedAsFavourite =
-                        favoriteLaunchIds.contains(launchItem.id);
-                    return Container(
-                        color: const Color(0xffbbbcbd),
-                        margin:
-                            const EdgeInsets.only(left: 10, right: 10, top: 5),
-                        padding: const EdgeInsets.only(
-                            left: 5, top: 20, right: 5, bottom: 10),
-                        child: ListTile(
-                            leading: const Icon(
-                              Icons.auto_graph,
-                              size: 50,
-                            ),
-                            title: Text(
-                              launchItem.name,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.stars_sharp),
-                              iconSize: 32.0,
-                              color: isMarkedAsFavourite
-                                  ? Colors.amber
-                                  : Colors.grey,
-                              onPressed: () {
-                                setState(() {
-                                  toggleFavorites(
-                                      isMarkedAsFavourite, launchItem.id);
-                                });
-                              },
-                            ),
-                            onTap: () {}));
+          future: realtimeLaunches,
+          builder: (context, AsyncSnapshot snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasData) {
+                final launches = snapshot.data as List<Launch>;
+                return buildLaunchLoadingSuccessWidget(context, launches);
+              } else {
+                return ExtractedLoadingErrorWidget(onTap: () {
+                  setState(() {
+                    loadAndStoreLaunches();
                   });
+                });
+              }
             } else {
-              return Center(
-                child: InkWell(
-                    child: const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Text(
-                          "Unexpected error occurred. Please tap to retry"),
-                    ),
-                    onTap: () => setState(() {
-                          loadAndStoreLaunches();
-                        })),
-              );
+              return buildLaunchLoadingWidget(context);
             }
-          } else {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.grey),
-            );
-          }
-        },
-      ),
+          }),
     );
   }
+
+  Widget buildLaunchLoadingSuccessWidget(
+          BuildContext context, List<Launch> launches) =>
+      ListView.builder(
+          itemCount: launches.length,
+          itemBuilder: (BuildContext ctx, int index) {
+            Launch launchItem = launches[index];
+            bool isMarkedAsFavourite =
+                favoriteLaunchIds.contains(launchItem.id);
+            return Container(
+                color: const Color(0xffbbbcbd),
+                margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
+                padding: const EdgeInsets.only(
+                    left: 5, top: 20, right: 5, bottom: 10),
+                child: ListTile(
+                    leading: const Icon(
+                      Icons.auto_graph,
+                      size: 50,
+                    ),
+                    title: Text(
+                      launchItem.name,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.stars_sharp),
+                      iconSize: 32.0,
+                      color: isMarkedAsFavourite ? Colors.amber : Colors.grey,
+                      onPressed: () {
+                        setState(() {
+                          toggleFavorites(isMarkedAsFavourite, launchItem.id);
+                        });
+                      },
+                    ),
+                    onTap: () {}));
+          });
+
+  Widget buildLaunchLoadingWidget(BuildContext context) => const Center(
+        child: CircularProgressIndicator(color: Colors.grey),
+      );
 
   void toggleFavorites(bool isMarkedAsFavorite, String id) {
     isMarkedAsFavorite
         ? favoriteLaunchIds.remove(id)
         : favoriteLaunchIds.add(id);
+  }
+}
+
+class ExtractedLoadingErrorWidget extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const ExtractedLoadingErrorWidget({
+    Key? key,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: InkWell(
+            child: const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Text("Unexpected error occurred. Please tap to retry"),
+            ),
+            onTap: () {
+              onTap();
+            }));
   }
 }
