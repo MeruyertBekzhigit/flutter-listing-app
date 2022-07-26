@@ -20,6 +20,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   List<Launch> mockLaunches = Utils.getMockedLaunches();
   late Future<List<Launch>> realtimeLaunches;
   List<String> favoriteLaunchIds = [];
+  List<String> expandedLaunchItems = [];
   ApiService api = MockAPI();
 
   @override
@@ -69,33 +70,55 @@ class LaunchListPageState extends State<LaunchListPage> {
             Launch launchItem = launches[index];
             bool isMarkedAsFavourite =
                 favoriteLaunchIds.contains(launchItem.id);
-            return Container(
-                color: const Color(0xffbbbcbd),
-                margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
-                padding: const EdgeInsets.only(
-                    left: 5, top: 20, right: 5, bottom: 10),
-                child: ListTile(
-                    leading: const Icon(
-                      Icons.auto_graph,
-                      size: 50,
-                    ),
-                    title: Text(
-                      launchItem.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.black),
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.stars_sharp),
-                      iconSize: 32.0,
-                      color: isMarkedAsFavourite ? Colors.amber : Colors.grey,
-                      onPressed: () {
-                        setState(() {
-                          toggleFavorites(isMarkedAsFavourite, launchItem.id);
-                        });
-                      },
-                    ),
-                    onTap: () {}));
+            bool isExpanded = expandedLaunchItems.contains(launchItem.id);
+            return Column(
+              children: [
+                Container(
+                    color: const Color(0xffbbbcbd),
+                    margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
+                    padding: const EdgeInsets.only(
+                        left: 5, top: 20, right: 5, bottom: 10),
+                    child: ListTile(
+                        leading: const Icon(
+                          Icons.auto_graph,
+                          size: 50,
+                        ),
+                        title: Text(
+                          launchItem.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.stars_sharp),
+                          iconSize: 32.0,
+                          color:
+                              isMarkedAsFavourite ? Colors.amber : Colors.grey,
+                          onPressed: () {
+                            setState(() {
+                              toggleFavorites(
+                                  isMarkedAsFavourite, launchItem.id);
+                            });
+                          },
+                        ),
+                        onTap: () {
+                          setState(() {
+                            isExpanded
+                                ? expandedLaunchItems.remove(launchItem.id)
+                                : expandedLaunchItems.add(launchItem.id);
+                          });
+                        })),
+                if (isExpanded) buildLayoutsContainer(context)
+              ],
+            );
           });
+
+  Widget buildLayoutsContainer(BuildContext context) {
+    return Container(
+      color: Colors.yellow,
+      height: 100,
+      margin: const EdgeInsets.only(left: 10, right: 10),
+    );
+  }
 
   Widget buildLaunchLoadingWidget(BuildContext context) => const Center(
         child: CircularProgressIndicator(color: Colors.grey),
