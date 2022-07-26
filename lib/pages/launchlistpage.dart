@@ -40,8 +40,12 @@ class LaunchListPageState extends State<LaunchListPage> {
 
   @override
   void initState() {
-    realtimeLaunches = getLaunchData();
+    loadAndStoreLaunches();
     super.initState();
+  }
+
+  void loadAndStoreLaunches() {
+    realtimeLaunches = getLaunchData();
   }
 
   @override
@@ -55,53 +59,67 @@ class LaunchListPageState extends State<LaunchListPage> {
       body: FutureBuilder<List<Launch>>(
         future: realtimeLaunches,
         builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.hasData) {
-            final launches = snapshot.data as List<Launch>;
-            return ListView.builder(
-                itemCount: launches.length,
-                itemBuilder: (BuildContext ctx, int index) {
-                  Launch launchItem = launches[index];
-                  bool isAmongFavourites =
-                      favoriteLaunches.contains(launchItem.id);
-                  return Container(
-                      color: const Color(0xffbbbcbd),
-                      margin:
-                          const EdgeInsets.only(left: 10, right: 10, top: 5),
-                      padding: const EdgeInsets.only(
-                          left: 5, top: 20, right: 5, bottom: 10),
-                      child: ListTile(
-                          leading: const Icon(
-                            Icons.auto_graph,
-                            size: 50,
-                          ),
-                          title: Text(
-                            launchItem.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.stars_sharp),
-                            iconSize: 32.0,
-                            color:
-                                isAmongFavourites ? Colors.amber : Colors.grey,
-                            onPressed: () {
-                              setState(() {
-                                isAmongFavourites
-                                    ? favoriteLaunches.remove(launchItem.id)
-                                    : favoriteLaunches.add(launchItem.id);
-                              });
-                            },
-                          ),
-                          onTap: () {}));
-                });
-          } else if (snapshot.hasError) {
-            return Text('${snapshot.error}');
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasData) {
+              final launches = snapshot.data as List<Launch>;
+              return ListView.builder(
+                  itemCount: launches.length,
+                  itemBuilder: (BuildContext ctx, int index) {
+                    Launch launchItem = launches[index];
+                    bool isAmongFavourites =
+                        favoriteLaunches.contains(launchItem.id);
+                    return Container(
+                        color: const Color(0xffbbbcbd),
+                        margin:
+                            const EdgeInsets.only(left: 10, right: 10, top: 5),
+                        padding: const EdgeInsets.only(
+                            left: 5, top: 20, right: 5, bottom: 10),
+                        child: ListTile(
+                            leading: const Icon(
+                              Icons.auto_graph,
+                              size: 50,
+                            ),
+                            title: Text(
+                              launchItem.name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.stars_sharp),
+                              iconSize: 32.0,
+                              color: isAmongFavourites
+                                  ? Colors.amber
+                                  : Colors.grey,
+                              onPressed: () {
+                                setState(() {
+                                  isAmongFavourites
+                                      ? favoriteLaunches.remove(launchItem.id)
+                                      : favoriteLaunches.add(launchItem.id);
+                                });
+                              },
+                            ),
+                            onTap: () {}));
+                  });
+            } else {
+              return Center(
+                child: InkWell(
+                    child: const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Text(
+                          "Unexpected error occurred. Please tap to retry"),
+                    ),
+                    onTap: () => setState(() {
+                          loadAndStoreLaunches();
+                        })),
+              );
+            }
+          } else {
+            return const Center(
+                child: CircularProgressIndicator(
+              color: Colors.grey,
+            ));
           }
-          return const Center(
-              child: CircularProgressIndicator(
-            color: Colors.grey,
-          ));
         },
       ),
     );
