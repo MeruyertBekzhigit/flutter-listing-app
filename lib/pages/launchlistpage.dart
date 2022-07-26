@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:sample_listing_app/helpers/api_service.dart';
 import 'package:sample_listing_app/helpers/utils.dart';
 import 'package:http/http.dart' as http;
 
@@ -9,7 +10,7 @@ import '../models/launch.dart';
 
 Future<List<Launch>> getLaunchData() async {
   final response =
-      await http.get(Uri.parse('https://api.spacexdata.com/v4/launches'));
+      await http.get(Uri.parse('https://api.spacexdata.com/v4/launchest'));
 
   if (response.statusCode == 200) {
     var decodedFilteredLaunch = jsonDecode(response.body);
@@ -36,7 +37,8 @@ class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
   List<Launch> mockLaunches = Utils.getMockedLaunches();
   late Future<List<Launch>> realtimeLaunches;
-  List<String> favoriteLaunches = [];
+  List<String> favoriteLaunchIds = [];
+  ApiService api = MockAPI();
 
   @override
   void initState() {
@@ -45,7 +47,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   }
 
   void loadAndStoreLaunches() {
-    realtimeLaunches = getLaunchData();
+    realtimeLaunches = api.getLaunches();
   }
 
   @override
@@ -67,7 +69,7 @@ class LaunchListPageState extends State<LaunchListPage> {
                   itemBuilder: (BuildContext ctx, int index) {
                     Launch launchItem = launches[index];
                     bool isAmongFavourites =
-                        favoriteLaunches.contains(launchItem.id);
+                        favoriteLaunchIds.contains(launchItem.id);
                     return Container(
                         color: const Color(0xffbbbcbd),
                         margin:
@@ -94,8 +96,8 @@ class LaunchListPageState extends State<LaunchListPage> {
                               onPressed: () {
                                 setState(() {
                                   isAmongFavourites
-                                      ? favoriteLaunches.remove(launchItem.id)
-                                      : favoriteLaunches.add(launchItem.id);
+                                      ? favoriteLaunchIds.remove(launchItem.id)
+                                      : favoriteLaunchIds.add(launchItem.id);
                                 });
                               },
                             ),
@@ -116,12 +118,14 @@ class LaunchListPageState extends State<LaunchListPage> {
             }
           } else {
             return const Center(
-                child: CircularProgressIndicator(
-              color: Colors.grey,
-            ));
+              child: CircularProgressIndicator(color: Colors.grey),
+            );
           }
         },
       ),
     );
+
+    //extract toogle for favouriteid
+    //extract methods for present success, error, loading
   }
 }
