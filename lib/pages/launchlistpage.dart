@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:sample_listing_app/helpers/api_service.dart';
-import 'package:sample_listing_app/helpers/utils.dart';
 
 import '../models/launch.dart';
 import '../models/payload.dart';
@@ -21,18 +20,14 @@ class LaunchListPage extends StatefulWidget {
 class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
 
-  List<Launch> mockLaunches = Utils.getMockedLaunches();
-  List<Payload> mockPayloads = [];
   Map<String, List<Payload>> mappedPayloads = {};
 
   late Future<List<Launch>> realtimeLaunches;
   List<String> favoriteLaunchIds = [];
   List<String> expandedLaunchIds = [];
   List<DataFetchState> payloadStates = [];
-  DataFetchState currentState = DataFetchState.loading;
 
   ApiService api = MockAPI();
-  var selectedCellIndex = 0;
 
   @override
   void initState() {
@@ -44,8 +39,9 @@ class LaunchListPageState extends State<LaunchListPage> {
     realtimeLaunches = api.getLaunches();
   }
 
-  void loadAndStorePayloads() {
-    mockPayloads = Utils.getMockedPayloads();
+  Future<void> loadAndStorePayloads(Launch launch) async {
+    final payloads = await api.getPayloadsByIds(launch.payloadIds);
+    setState(() => mappedPayloads[launch.id] = payloads);
   }
 
   @override
@@ -58,7 +54,6 @@ class LaunchListPageState extends State<LaunchListPage> {
       ),
       body: FutureBuilder<List<Launch>>(
         future: realtimeLaunches,
-        // future: Future.value(Utils.getMockedLaunches()),
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
@@ -84,33 +79,31 @@ class LaunchListPageState extends State<LaunchListPage> {
       itemCount: launches.length,
       itemBuilder: (BuildContext ctx, int index) {
         Launch launchItem = launches[index];
-
         bool isExpanded = expandedLaunchIds.contains(launchItem.id);
+        bool hasPayload = mappedPayloads.containsKey(launchItem.id);
+        DataFetchState fetchState =
+            hasPayload ? DataFetchState.hasData : DataFetchState.loading;
         return Column(
           children: [
-            buildListItemHeader(ctx, launchItem, () {
-              selectedCellIndex = index;
-              if (index % 3 == 0) {
-                if (!mappedPayloads.containsKey(launchItem.id)) {
-                  mappedPayloads[launchItem.id] = mockPayloads;
-                }
-                currentState = DataFetchState.hasData;
-              } else if (index % 3 == 1) {
-                currentState = DataFetchState.loading;
-              } else {
-                currentState = DataFetchState.error;
+            buildListItemHeader(ctx, launchItem, (expanded) {
+              if (!hasPayload) {
+                loadAndStorePayloads(launchItem);
               }
             }),
-            if (isExpanded && selectedCellIndex == index)
-              buildPayloadsContainer(context, currentState, launchItem.id)
+            if (isExpanded)
+              buildPayloadsContainer(
+                context,
+                fetchState,
+                mappedPayloads[launchItem.id] ?? [],
+              )
           ],
         );
       },
     );
   }
 
-  Widget buildListItemHeader(
-      BuildContext context, Launch launchItem, VoidCallback onExpandRequested) {
+  Widget buildListItemHeader(BuildContext context, Launch launchItem,
+      ValueChanged<bool> onExpandChanged) {
     bool isMarkedAsFavourite = favoriteLaunchIds.contains(launchItem.id);
     bool isExpanded = expandedLaunchIds.contains(launchItem.id);
     return Container(
@@ -145,12 +138,9 @@ class LaunchListPageState extends State<LaunchListPage> {
             if (isExpanded) {
               expandedLaunchIds.remove(launchItem.id);
             } else {
-              if (mockPayloads.isEmpty) {
-                loadAndStorePayloads();
-              }
-              onExpandRequested();
               expandedLaunchIds.add(launchItem.id);
             }
+            onExpandChanged(!isExpanded);
           });
         },
       ),
@@ -159,7 +149,7 @@ class LaunchListPageState extends State<LaunchListPage> {
 
   // pass states here
   Widget buildPayloadsContainer(
-      BuildContext context, DataFetchState state, String id) {
+      BuildContext context, DataFetchState state, List<Payload> payloads) {
     if (state == DataFetchState.loading) {
       return Container(
         color: Colors.white,
@@ -173,7 +163,7 @@ class LaunchListPageState extends State<LaunchListPage> {
         margin: const EdgeInsets.only(left: 10, right: 10),
         child: Column(children: [
           Spacer(),
-          for (var i in mappedPayloads[id]!)
+          for (var i in payloads)
             Text(
               i.name.toString(),
               style: const TextStyle(color: Colors.black, fontSize: 14),
@@ -183,7 +173,7 @@ class LaunchListPageState extends State<LaunchListPage> {
     } else {
       return _ExtractedLaunchErrorIndicator(onTap: () {
         setState(() {
-          loadAndStorePayloads();
+          // loadAndStorePayloads();
         });
       });
     }

@@ -9,16 +9,18 @@ part 'launch.g.dart';
 class Launch {
   final String id;
   final String name;
-  final List<String> payloads;
 
   @JsonKey(name: 'date_local')
   final String date;
+
+  @JsonKey(name: 'payloads')
+  final List<String> payloadIds;
 
   const Launch(
       {required this.id,
       required this.name,
       required this.date,
-      required this.payloads});
+      required this.payloadIds});
 
   /// A necessary factory constructor for creating a new User instance
   /// from a map. Pass the map to the generated `_$LaunchFromJson()` constructor.
