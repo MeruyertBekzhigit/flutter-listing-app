@@ -6,6 +6,8 @@ import 'package:sample_listing_app/helpers/utils.dart';
 
 import '../models/launch.dart';
 
+enum DataFetchState { loading, error, hasData }
+
 class LaunchListPage extends StatefulWidget {
   const LaunchListPage({Key? key}) : super(key: key);
 
@@ -21,6 +23,8 @@ class LaunchListPageState extends State<LaunchListPage> {
   late Future<List<Launch>> realtimeLaunches;
   List<String> favoriteLaunchIds = [];
   List<String> expandedLaunchIds = [];
+  List<DataFetchState> payloadStates = [];
+  DataFetchState currentState = DataFetchState.loading;
   ApiService api = MockAPI();
 
   @override
@@ -133,11 +137,21 @@ class LaunchListPageState extends State<LaunchListPage> {
 
   // pass states here
   Widget buildPayloadsContainer(BuildContext context) {
-    return Container(
-      color: Colors.yellow,
-      height: 100,
-      margin: const EdgeInsets.only(left: 10, right: 10),
-    );
+    if (currentState == DataFetchState.loading) {
+      return buildLoading(context);
+    } else if (currentState == DataFetchState.hasData) {
+      return Container(
+        color: Colors.yellow,
+        height: 100,
+        margin: const EdgeInsets.only(left: 10, right: 10),
+      );
+    } else {
+      return _ExtractedLaunchErrorIndicator(onTap: () {
+        setState(() {
+          loadAndStoreLaunches();
+        });
+      });
+    }
   }
 
   Widget buildLoading(BuildContext context) => const Center(
