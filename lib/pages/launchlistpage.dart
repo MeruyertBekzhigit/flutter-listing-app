@@ -5,6 +5,7 @@ import 'package:sample_listing_app/helpers/api_service.dart';
 import 'package:sample_listing_app/helpers/utils.dart';
 
 import '../models/launch.dart';
+import '../models/payload.dart';
 
 enum DataFetchState { loading, error, hasData }
 
@@ -19,12 +20,16 @@ class LaunchListPage extends StatefulWidget {
 
 class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
+
   List<Launch> mockLaunches = Utils.getMockedLaunches();
+  List<Payload> mockPayloads = Utils.getMockedPayloads();
+
   late Future<List<Launch>> realtimeLaunches;
   List<String> favoriteLaunchIds = [];
   List<String> expandedLaunchIds = [];
   List<DataFetchState> payloadStates = [];
   DataFetchState currentState = DataFetchState.loading;
+
   ApiService api = MockAPI();
 
   @override
