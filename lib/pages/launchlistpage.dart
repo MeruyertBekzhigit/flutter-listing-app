@@ -32,6 +32,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   DataFetchState currentState = DataFetchState.loading;
 
   ApiService api = MockAPI();
+  var selectedCellIndex = 0;
 
   @override
   void initState() {
@@ -56,8 +57,8 @@ class LaunchListPageState extends State<LaunchListPage> {
         backgroundColor: Colors.black,
       ),
       body: FutureBuilder<List<Launch>>(
-        // future: realtimeLaunches,
-        future: Future.value(Utils.getMockedLaunches()),
+        future: realtimeLaunches,
+        // future: Future.value(Utils.getMockedLaunches()),
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
@@ -88,6 +89,7 @@ class LaunchListPageState extends State<LaunchListPage> {
         return Column(
           children: [
             buildListItemHeader(ctx, launchItem, () {
+              selectedCellIndex = index;
               if (index % 3 == 0) {
                 if (!mappedPayloads.containsKey(launchItem.id)) {
                   mappedPayloads[launchItem.id] = mockPayloads;
@@ -99,7 +101,7 @@ class LaunchListPageState extends State<LaunchListPage> {
                 currentState = DataFetchState.error;
               }
             }),
-            if (isExpanded)
+            if (isExpanded && selectedCellIndex == index)
               buildPayloadsContainer(context, currentState, launchItem.id)
           ],
         );
@@ -140,10 +142,13 @@ class LaunchListPageState extends State<LaunchListPage> {
         onTap: () {
           setState(() {
             // notify that onClickHappened
-            onExpandRequested();
             if (isExpanded) {
               expandedLaunchIds.remove(launchItem.id);
             } else {
+              if (mockPayloads.isEmpty) {
+                loadAndStorePayloads();
+              }
+              onExpandRequested();
               expandedLaunchIds.add(launchItem.id);
             }
           });
@@ -156,12 +161,24 @@ class LaunchListPageState extends State<LaunchListPage> {
   Widget buildPayloadsContainer(
       BuildContext context, DataFetchState state, String id) {
     if (state == DataFetchState.loading) {
-      return buildLoading(context);
-    } else if (state == DataFetchState.hasData) {
       return Container(
-        color: Colors.yellow,
+        color: Colors.white,
         height: 100,
         margin: const EdgeInsets.only(left: 10, right: 10),
+        child: buildLoading(context),
+      );
+    } else if (state == DataFetchState.hasData) {
+      return Container(
+        height: 100,
+        margin: const EdgeInsets.only(left: 10, right: 10),
+        child: Column(children: [
+          Spacer(),
+          for (var i in mappedPayloads[id]!)
+            Text(
+              i.name.toString(),
+              style: const TextStyle(color: Colors.black, fontSize: 14),
+            ),
+        ]),
       );
     } else {
       return _ExtractedLaunchErrorIndicator(onTap: () {
