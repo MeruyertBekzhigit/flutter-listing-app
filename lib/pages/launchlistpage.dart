@@ -120,9 +120,11 @@ class LaunchListPageState extends State<LaunchListPage> {
           setState(() {
             // notify that onClickHappened
             onExpandRequested();
-            isExpanded
-                ? expandedLaunchIds.remove(launchItem.id)
-                : expandedLaunchIds.add(launchItem.id);
+            if (isExpanded) {
+              expandedLaunchIds.remove(launchItem.id);
+            } else {
+              expandedLaunchIds.add(launchItem.id);
+            }
           });
         },
       ),
