@@ -22,7 +22,8 @@ class LaunchListPageState extends State<LaunchListPage> {
   static const IconData star = IconData(0xe5f9, fontFamily: 'MaterialIcons');
 
   List<Launch> mockLaunches = Utils.getMockedLaunches();
-  List<Payload> mockPayloads = Utils.getMockedPayloads();
+  List<Payload> mockPayloads = [];
+  Map<String, List<Payload>> mappedPayloads = {};
 
   late Future<List<Launch>> realtimeLaunches;
   List<String> favoriteLaunchIds = [];
@@ -40,6 +41,10 @@ class LaunchListPageState extends State<LaunchListPage> {
 
   void loadAndStoreLaunches() {
     realtimeLaunches = api.getLaunches();
+  }
+
+  void loadAndStorePayloads() {
+    mockPayloads = Utils.getMockedPayloads();
   }
 
   @override
@@ -82,10 +87,20 @@ class LaunchListPageState extends State<LaunchListPage> {
         bool isExpanded = expandedLaunchIds.contains(launchItem.id);
         return Column(
           children: [
-            buildListItemHeader(
-                ctx, launchItem, () => print('Index is $index')),
-            // pass the states of layout loading
-            if (isExpanded) buildPayloadsContainer(context)
+            buildListItemHeader(ctx, launchItem, () {
+              if (index % 3 == 0) {
+                if (!mappedPayloads.containsKey(launchItem.id)) {
+                  mappedPayloads[launchItem.id] = mockPayloads;
+                }
+                currentState = DataFetchState.hasData;
+              } else if (index % 3 == 1) {
+                currentState = DataFetchState.loading;
+              } else {
+                currentState = DataFetchState.error;
+              }
+            }),
+            if (isExpanded)
+              buildPayloadsContainer(context, currentState, launchItem.id)
           ],
         );
       },
@@ -93,10 +108,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   }
 
   Widget buildListItemHeader(
-    BuildContext context,
-    Launch launchItem,
-    VoidCallback onExpandRequested,
-  ) {
+      BuildContext context, Launch launchItem, VoidCallback onExpandRequested) {
     bool isMarkedAsFavourite = favoriteLaunchIds.contains(launchItem.id);
     bool isExpanded = expandedLaunchIds.contains(launchItem.id);
     return Container(
@@ -141,10 +153,11 @@ class LaunchListPageState extends State<LaunchListPage> {
   }
 
   // pass states here
-  Widget buildPayloadsContainer(BuildContext context) {
-    if (currentState == DataFetchState.loading) {
+  Widget buildPayloadsContainer(
+      BuildContext context, DataFetchState state, String id) {
+    if (state == DataFetchState.loading) {
       return buildLoading(context);
-    } else if (currentState == DataFetchState.hasData) {
+    } else if (state == DataFetchState.hasData) {
       return Container(
         color: Colors.yellow,
         height: 100,
@@ -153,7 +166,7 @@ class LaunchListPageState extends State<LaunchListPage> {
     } else {
       return _ExtractedLaunchErrorIndicator(onTap: () {
         setState(() {
-          loadAndStoreLaunches();
+          loadAndStorePayloads();
         });
       });
     }
