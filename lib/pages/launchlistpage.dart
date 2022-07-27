@@ -20,7 +20,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   List<Launch> mockLaunches = Utils.getMockedLaunches();
   late Future<List<Launch>> realtimeLaunches;
   List<String> favoriteLaunchIds = [];
-  List<String> expandedLaunchItems = [];
+  List<String> expandedLaunchIds = [];
   ApiService api = MockAPI();
 
   @override
@@ -42,77 +42,95 @@ class LaunchListPageState extends State<LaunchListPage> {
         backgroundColor: Colors.black,
       ),
       body: FutureBuilder<List<Launch>>(
-          future: realtimeLaunches,
-          builder: (context, AsyncSnapshot snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasData) {
-                final launches = snapshot.data as List<Launch>;
-                return buildLaunchLoadingSuccessWidget(context, launches);
-              } else {
-                return ExtractedLoadingErrorWidget(onTap: () {
-                  setState(() {
-                    loadAndStoreLaunches();
-                  });
-                });
-              }
+        // future: realtimeLaunches,
+        future: Future.value(Utils.getMockedLaunches()),
+        builder: (context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasData) {
+              final launches = snapshot.data as List<Launch>;
+              return buildLaunchList(context, launches);
             } else {
-              return buildLaunchLoadingWidget(context);
+              return _ExtractedLaunchErrorIndicator(onTap: () {
+                setState(() {
+                  loadAndStoreLaunches();
+                });
+              });
             }
-          }),
+          } else {
+            return buildLoading(context);
+          }
+        },
+      ),
     );
   }
 
-  Widget buildLaunchLoadingSuccessWidget(
-          BuildContext context, List<Launch> launches) =>
-      ListView.builder(
-          itemCount: launches.length,
-          itemBuilder: (BuildContext ctx, int index) {
-            Launch launchItem = launches[index];
-            bool isMarkedAsFavourite =
-                favoriteLaunchIds.contains(launchItem.id);
-            bool isExpanded = expandedLaunchItems.contains(launchItem.id);
-            return Column(
-              children: [
-                Container(
-                    color: const Color(0xffbbbcbd),
-                    margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
-                    padding: const EdgeInsets.only(
-                        left: 5, top: 20, right: 5, bottom: 10),
-                    child: ListTile(
-                        leading: const Icon(
-                          Icons.auto_graph,
-                          size: 50,
-                        ),
-                        title: Text(
-                          launchItem.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.black),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.stars_sharp),
-                          iconSize: 32.0,
-                          color:
-                              isMarkedAsFavourite ? Colors.amber : Colors.grey,
-                          onPressed: () {
-                            setState(() {
-                              toggleFavorites(
-                                  isMarkedAsFavourite, launchItem.id);
-                            });
-                          },
-                        ),
-                        onTap: () {
-                          setState(() {
-                            isExpanded
-                                ? expandedLaunchItems.remove(launchItem.id)
-                                : expandedLaunchItems.add(launchItem.id);
-                          });
-                        })),
-                if (isExpanded) buildLayoutsContainer(context)
-              ],
-            );
-          });
+  Widget buildLaunchList(BuildContext context, List<Launch> launches) {
+    return ListView.builder(
+      itemCount: launches.length,
+      itemBuilder: (BuildContext ctx, int index) {
+        Launch launchItem = launches[index];
 
-  Widget buildLayoutsContainer(BuildContext context) {
+        bool isExpanded = expandedLaunchIds.contains(launchItem.id);
+        return Column(
+          children: [
+            buildListItemHeader(
+                ctx, launchItem, () => print('Index is $index')),
+            // pass the states of layout loading
+            if (isExpanded) buildPayloadsContainer(context)
+          ],
+        );
+      },
+    );
+  }
+
+  Widget buildListItemHeader(
+    BuildContext context,
+    Launch launchItem,
+    VoidCallback onExpandRequested,
+  ) {
+    bool isMarkedAsFavourite = favoriteLaunchIds.contains(launchItem.id);
+    bool isExpanded = expandedLaunchIds.contains(launchItem.id);
+    return Container(
+      color: const Color(0xffbbbcbd),
+      margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
+      padding: const EdgeInsets.only(
+        left: 5,
+        top: 20,
+        right: 5,
+        bottom: 10,
+      ),
+      child: ListTile(
+        leading: const Icon(Icons.auto_graph, size: 50),
+        title: Text(
+          launchItem.name,
+          style:
+              const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.stars_sharp),
+          iconSize: 32.0,
+          color: isMarkedAsFavourite ? Colors.amber : Colors.grey,
+          onPressed: () {
+            setState(() {
+              updateFavoriteState(isMarkedAsFavourite, launchItem.id);
+            });
+          },
+        ),
+        onTap: () {
+          setState(() {
+            // notify that onClickHappened
+            onExpandRequested();
+            isExpanded
+                ? expandedLaunchIds.remove(launchItem.id)
+                : expandedLaunchIds.add(launchItem.id);
+          });
+        },
+      ),
+    );
+  }
+
+  // pass states here
+  Widget buildPayloadsContainer(BuildContext context) {
     return Container(
       color: Colors.yellow,
       height: 100,
@@ -120,21 +138,23 @@ class LaunchListPageState extends State<LaunchListPage> {
     );
   }
 
-  Widget buildLaunchLoadingWidget(BuildContext context) => const Center(
+  Widget buildLoading(BuildContext context) => const Center(
         child: CircularProgressIndicator(color: Colors.grey),
       );
 
-  void toggleFavorites(bool isMarkedAsFavorite, String id) {
-    isMarkedAsFavorite
-        ? favoriteLaunchIds.remove(id)
-        : favoriteLaunchIds.add(id);
+  void updateFavoriteState(bool isMarkedAsFavorite, String id) {
+    if (isMarkedAsFavorite) {
+      favoriteLaunchIds.remove(id);
+    } else {
+      favoriteLaunchIds.add(id);
+    }
   }
 }
 
-class ExtractedLoadingErrorWidget extends StatelessWidget {
+class _ExtractedLaunchErrorIndicator extends StatelessWidget {
   final VoidCallback onTap;
 
-  const ExtractedLoadingErrorWidget({
+  const _ExtractedLaunchErrorIndicator({
     Key? key,
     required this.onTap,
   }) : super(key: key);
@@ -142,13 +162,13 @@ class ExtractedLoadingErrorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-        child: InkWell(
-            child: const Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Text("Unexpected error occurred. Please tap to retry"),
-            ),
-            onTap: () {
-              onTap();
-            }));
+      child: InkWell(
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Text("Unexpected error occurred. Please tap to retry"),
+        ),
+      ),
+    );
   }
 }
