@@ -44,9 +44,15 @@ class RealAPI extends ApiService {
   }
 
   @override
-  Future<List<Payload>> getPayloadsByIds(List<String> id) {
-    // TODO: Iterate through each of them and only return if every payload is done (Future.wait  -> you can pass a List)
-    throw UnimplementedError();
+  Future<List<Payload>> getPayloadsByIds(List<String> ids) async {
+    List<Payload> finalItems = [];
+
+    await Future.wait(ids.map((id) async {
+      Payload finalItem = await getPayloadById(id);
+      finalItems.add(finalItem);
+    }).toList());
+
+    return finalItems;
   }
 }
 
