@@ -6,7 +6,7 @@ import 'package:sample_listing_app/helpers/api_service.dart';
 import '../models/launch.dart';
 import '../models/payload.dart';
 
-enum DataFetchState { loading, error, hasData }
+enum DataFetchState { none, loading, error, hasData }
 
 class LaunchListPage extends StatefulWidget {
   const LaunchListPage({Key? key}) : super(key: key);
@@ -23,8 +23,10 @@ class LaunchListPageState extends State<LaunchListPage> {
   Map<String, List<Payload>> mappedPayloads = {};
 
   late Future<List<Launch>> realtimeLaunches;
+
   List<String> favoriteLaunchIds = [];
   List<String> expandedLaunchIds = [];
+
   List<DataFetchState> payloadStates = [];
 
   ApiService api = MockAPI();
@@ -35,13 +37,34 @@ class LaunchListPageState extends State<LaunchListPage> {
     super.initState();
   }
 
-  void loadAndStoreLaunches() {
+  Future<void> loadAndStoreLaunches() async {
     realtimeLaunches = api.getLaunches();
+
+    final launches = await realtimeLaunches;
+    payloadStates =
+        List.generate(launches.length, (index) => DataFetchState.none);
   }
 
-  Future<void> loadAndStorePayloads(Launch launch) async {
-    final payloads = await api.getPayloadsByIds(launch.payloadIds);
-    setState(() => mappedPayloads[launch.id] = payloads);
+  Future<void> _loadPayloadsForLaunchIfNecessary(
+      Launch launch, int index) async {
+    final currentState = payloadStates[index];
+
+    switch (currentState) {
+      case DataFetchState.none:
+      case DataFetchState.error:
+        try {
+          setState(() => payloadStates[index] = DataFetchState.loading);
+          final payloads = await api.getPayloadsByIds(launch.payloadIds);
+          mappedPayloads[launch.id] = payloads;
+          setState(() => payloadStates[index] = DataFetchState.hasData);
+        } catch (e) {
+          setState(() => payloadStates[index] = DataFetchState.error);
+        }
+        break;
+
+      default:
+        break;
+    }
   }
 
   @override
@@ -81,28 +104,23 @@ class LaunchListPageState extends State<LaunchListPage> {
       itemBuilder: (BuildContext ctx, int index) {
         Launch launchItem = launches[index];
         bool isExpanded = expandedLaunchIds.contains(launchItem.id);
-        bool hasPayload = mappedPayloads.containsKey(launchItem.id);
-        DataFetchState fetchState =
-            hasPayload ? DataFetchState.hasData : DataFetchState.error;
         return Column(
           children: [
             buildListItemHeader(
               context: ctx,
               launchItem: launchItem,
               onExpandChanged: (expanded) {
-                if (!hasPayload) {
-                  loadAndStorePayloads(launchItem);
-                }
+                _loadPayloadsForLaunchIfNecessary(launchItem, index);
               },
             ),
             if (isExpanded)
               buildPayloadsContainer(
                 context,
-                fetchState,
+                payloadStates[index],
                 mappedPayloads[launchItem.id] ?? [],
                 () {
                   setState(() {
-                    loadAndStorePayloads(launchItem);
+                    _loadPayloadsForLaunchIfNecessary(launchItem, index);
                   });
                 },
               )
@@ -147,7 +165,6 @@ class LaunchListPageState extends State<LaunchListPage> {
         ),
         onTap: () {
           setState(() {
-            // notify that onClickHappened
             if (isExpanded) {
               expandedLaunchIds.remove(launchItem.id);
             } else {

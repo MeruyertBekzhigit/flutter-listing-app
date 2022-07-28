@@ -58,7 +58,7 @@ class RealAPI extends ApiService {
 
 class MockAPI extends RealAPI {
   var launchFetchAttemptCounter = 0;
-  var payloadFetchAttemptCounter = 1;
+  var payloadFetchAttemptCounter = 0;
 
   @override
   Future<List<Launch>> getLaunches() async {
