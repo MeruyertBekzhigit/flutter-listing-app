@@ -77,7 +77,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   Widget buildLaunchList(BuildContext context, List<Launch> launches) {
     return ListView.builder(
       itemCount: launches.length,
-      // create a view, where you have an item builder and collapsedittem buuilder
+      // create a view, where you have an item builder and collapsed item builder
       itemBuilder: (BuildContext ctx, int index) {
         Launch launchItem = launches[index];
         bool isExpanded = expandedLaunchIds.contains(launchItem.id);
@@ -86,26 +86,37 @@ class LaunchListPageState extends State<LaunchListPage> {
             hasPayload ? DataFetchState.hasData : DataFetchState.error;
         return Column(
           children: [
-            buildListItemHeader(ctx, launchItem, (expanded) {
-              if (!hasPayload) {
-                loadAndStorePayloads(launchItem);
-              }
-            }),
+            buildListItemHeader(
+              context: ctx,
+              launchItem: launchItem,
+              onExpandChanged: (expanded) {
+                if (!hasPayload) {
+                  loadAndStorePayloads(launchItem);
+                }
+              },
+            ),
             if (isExpanded)
               buildPayloadsContainer(
-                  context, fetchState, mappedPayloads[launchItem.id] ?? [], () {
-                setState(() {
-                  loadAndStorePayloads(launchItem);
-                });
-              })
+                context,
+                fetchState,
+                mappedPayloads[launchItem.id] ?? [],
+                () {
+                  setState(() {
+                    loadAndStorePayloads(launchItem);
+                  });
+                },
+              )
           ],
         );
       },
     );
   }
 
-  Widget buildListItemHeader(BuildContext context, Launch launchItem,
-      ValueChanged<bool> onExpandChanged) {
+  Widget buildListItemHeader({
+    required BuildContext context,
+    required Launch launchItem,
+    required ValueChanged<bool> onExpandChanged,
+  }) {
     bool isMarkedAsFavourite = favoriteLaunchIds.contains(launchItem.id);
     bool isExpanded = expandedLaunchIds.contains(launchItem.id);
     return Container(
@@ -175,9 +186,7 @@ class LaunchListPageState extends State<LaunchListPage> {
         ]),
       );
     } else {
-      return _ExtractedLaunchErrorIndicator(onTap: () {
-        retryFetch();
-      });
+      return _ExtractedLaunchErrorIndicator(onTap: retryFetch);
     }
   }
 
