@@ -57,15 +57,16 @@ class RealAPI extends ApiService {
 }
 
 class MockAPI extends RealAPI {
-  var counter = 0;
+  var launchFetchAttemptCounter = 0;
+  var payloadFetchAttemptCounter = 1;
 
   @override
   Future<List<Launch>> getLaunches() async {
     // Simulating the HTTP call
     await Future.delayed(const Duration(seconds: 2));
-    counter += 1;
+    launchFetchAttemptCounter += 1;
 
-    if (counter == 1) {
+    if (launchFetchAttemptCounter == 1) {
       throw Exception('Failed to load launches');
     } else {
       return super.getLaunches();
@@ -73,9 +74,15 @@ class MockAPI extends RealAPI {
   }
 
   @override
-  Future<List<Payload>> getPayloadsByIds(List<String> id) async {
-    // TODO: implement getPayloadsByIds
+  Future<List<Payload>> getPayloadsByIds(List<String> ids) async {
+    // Simulating the HTTP call
     await Future.delayed(const Duration(seconds: 2));
-    return Utils.getMockedPayloads();
+    payloadFetchAttemptCounter += 1;
+
+    if (payloadFetchAttemptCounter == 1) {
+      throw Exception('Failed to load launches');
+    } else {
+      return super.getPayloadsByIds(ids);
+    }
   }
 }

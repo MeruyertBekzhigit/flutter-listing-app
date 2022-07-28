@@ -27,7 +27,7 @@ class LaunchListPageState extends State<LaunchListPage> {
   List<String> expandedLaunchIds = [];
   List<DataFetchState> payloadStates = [];
 
-  ApiService api = RealAPI();
+  ApiService api = MockAPI();
 
   @override
   void initState() {
@@ -83,7 +83,7 @@ class LaunchListPageState extends State<LaunchListPage> {
         bool isExpanded = expandedLaunchIds.contains(launchItem.id);
         bool hasPayload = mappedPayloads.containsKey(launchItem.id);
         DataFetchState fetchState =
-            hasPayload ? DataFetchState.hasData : DataFetchState.loading;
+            hasPayload ? DataFetchState.hasData : DataFetchState.error;
         return Column(
           children: [
             buildListItemHeader(ctx, launchItem, (expanded) {
@@ -93,10 +93,11 @@ class LaunchListPageState extends State<LaunchListPage> {
             }),
             if (isExpanded)
               buildPayloadsContainer(
-                context,
-                fetchState,
-                mappedPayloads[launchItem.id] ?? [],
-              )
+                  context, fetchState, mappedPayloads[launchItem.id] ?? [], () {
+                setState(() {
+                  loadAndStorePayloads(launchItem);
+                });
+              })
           ],
         );
       },
@@ -149,21 +150,23 @@ class LaunchListPageState extends State<LaunchListPage> {
   }
 
   // pass states here
-  Widget buildPayloadsContainer(
-      BuildContext context, DataFetchState state, List<Payload> payloads) {
+  Widget buildPayloadsContainer(BuildContext context, DataFetchState state,
+      List<Payload> payloads, VoidCallback retryFetch) {
     if (state == DataFetchState.loading) {
       return Container(
         color: Colors.white,
-        height: 100,
+        height: 80,
         margin: const EdgeInsets.only(left: 10, right: 10),
         child: buildLoading(context),
       );
     } else if (state == DataFetchState.hasData) {
       return Container(
-        height: 100,
+        height: 80,
         margin: const EdgeInsets.only(left: 10, right: 10),
         child: Column(children: [
-          Spacer(),
+          const SizedBox(
+            height: 40,
+          ),
           for (var i in payloads)
             Text(
               i.name.toString(),
@@ -173,9 +176,7 @@ class LaunchListPageState extends State<LaunchListPage> {
       );
     } else {
       return _ExtractedLaunchErrorIndicator(onTap: () {
-        setState(() {
-          // loadAndStorePayloads();
-        });
+        retryFetch();
       });
     }
   }
