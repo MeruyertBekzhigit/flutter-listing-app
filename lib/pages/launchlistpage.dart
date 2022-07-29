@@ -29,7 +29,7 @@ class LaunchListPageState extends State<LaunchListPage> {
 
   List<DataFetchState> payloadStates = [];
 
-  ApiService api = MockAPI();
+  ApiService api = RealAPI();
 
   @override
   void initState() {
@@ -100,43 +100,55 @@ class LaunchListPageState extends State<LaunchListPage> {
   Widget buildLaunchList(BuildContext context, List<Launch> launches) {
     return ListView.builder(
       itemCount: launches.length,
-      // create a view, where you have an item builder and collapsed item builder
       itemBuilder: (BuildContext ctx, int index) {
         Launch launchItem = launches[index];
-        bool isExpanded = expandedLaunchIds.contains(launchItem.id);
         return Column(
           children: [
             buildListItemHeader(
               context: ctx,
               launchItem: launchItem,
-              onExpandChanged: (expanded) {
-                _loadPayloadsForLaunchIfNecessary(launchItem, index);
-              },
             ),
-            if (isExpanded)
-              buildPayloadsContainer(
-                context,
-                payloadStates[index],
-                mappedPayloads[launchItem.id] ?? [],
-                () {
+            Padding(
+              padding: const EdgeInsets.only(left: 10.0, right: 10, bottom: 5),
+              child: ExpansionPanelList(
+                expansionCallback: (int index, bool isExpanded) {
                   setState(() {
                     _loadPayloadsForLaunchIfNecessary(launchItem, index);
                   });
                 },
-              )
+                animationDuration: Duration(milliseconds: 1000),
+                children: [
+                  ExpansionPanel(
+                    headerBuilder: (BuildContext context, bool isExpanded) {
+                      return Text(
+                        'Payload count: ${mappedPayloads[launchItem.id]?.length ?? 0}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      );
+                    },
+                    body: buildPayloadsContainer(
+                      context,
+                      payloadStates[index],
+                      mappedPayloads[launchItem.id] ?? [],
+                      () {
+                        setState(() {
+                          _loadPayloadsForLaunchIfNecessary(launchItem, index);
+                        });
+                      },
+                    ),
+                    canTapOnHeader: true,
+                  ),
+                ],
+              ),
+            ),
           ],
         );
       },
     );
   }
 
-  Widget buildListItemHeader({
-    required BuildContext context,
-    required Launch launchItem,
-    required ValueChanged<bool> onExpandChanged,
-  }) {
+  Widget buildListItemHeader(
+      {required BuildContext context, required Launch launchItem}) {
     bool isMarkedAsFavourite = favoriteLaunchIds.contains(launchItem.id);
-    bool isExpanded = expandedLaunchIds.contains(launchItem.id);
     return Container(
       color: const Color(0xffbbbcbd),
       margin: const EdgeInsets.only(left: 10, right: 10, top: 5),
@@ -163,16 +175,7 @@ class LaunchListPageState extends State<LaunchListPage> {
             });
           },
         ),
-        onTap: () {
-          setState(() {
-            if (isExpanded) {
-              expandedLaunchIds.remove(launchItem.id);
-            } else {
-              expandedLaunchIds.add(launchItem.id);
-            }
-            onExpandChanged(!isExpanded);
-          });
-        },
+        onTap: () {},
       ),
     );
   }
@@ -188,19 +191,14 @@ class LaunchListPageState extends State<LaunchListPage> {
         child: buildLoading(context),
       );
     } else if (state == DataFetchState.hasData) {
-      return Container(
-        height: 80,
-        margin: const EdgeInsets.only(left: 10, right: 10),
-        child: Column(children: [
-          const SizedBox(
-            height: 40,
-          ),
+      return Column(
+        children: [
           for (var i in payloads)
             Text(
               i.name.toString(),
               style: const TextStyle(color: Colors.black, fontSize: 14),
             ),
-        ]),
+        ],
       );
     } else {
       return _ExtractedLaunchErrorIndicator(onTap: retryFetch);
