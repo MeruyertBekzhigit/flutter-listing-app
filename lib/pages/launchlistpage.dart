@@ -81,7 +81,7 @@ class LaunchListPageState extends State<LaunchListPage> {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
               final launches = snapshot.data as List<Launch>;
-              return buildLaunchList(context, launches);
+              return buildExpandableLaunchList(context, launches);
             } else {
               return _ExtractedLaunchErrorIndicator(onTap: () {
                 setState(() {
@@ -98,51 +98,43 @@ class LaunchListPageState extends State<LaunchListPage> {
   }
 
   Widget buildLaunchList(BuildContext context, List<Launch> launches) {
-    return ListView.builder(
-      itemCount: launches.length,
-      itemBuilder: (BuildContext ctx, int index) {
-        Launch launchItem = launches[index];
-        return Column(
-          children: [
-            buildListItemHeader(
-              context: ctx,
-              launchItem: launchItem,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0, right: 10, bottom: 5),
-              child: ExpansionPanelList(
-                expansionCallback: (int index, bool isExpanded) {
-                  setState(() {
-                    _loadPayloadsForLaunchIfNecessary(launchItem, index);
-                  });
-                },
-                animationDuration: Duration(milliseconds: 1000),
-                children: [
-                  ExpansionPanel(
-                    headerBuilder: (BuildContext context, bool isExpanded) {
-                      return Text(
-                        'Payload count: ${mappedPayloads[launchItem.id]?.length ?? 0}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      );
-                    },
-                    body: buildPayloadsContainer(
-                      context,
-                      payloadStates[index],
-                      mappedPayloads[launchItem.id] ?? [],
-                      () {
-                        setState(() {
-                          _loadPayloadsForLaunchIfNecessary(launchItem, index);
-                        });
-                      },
-                    ),
-                    canTapOnHeader: true,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
+    final items = List.generate(
+        launches.length,
+        (index) =>
+            buildListItemHeader(context: context, launchItem: launches[index]));
+    return ListView(children: items);
+  }
+
+  Widget buildExpandableLaunchList(
+      BuildContext context, List<Launch> launches) {
+    final items = List.generate(
+      launches.length,
+      (index) => ExpansionPanel(
+        headerBuilder: (BuildContext context, bool isExpanded) {
+          return Text(launches[index].name);
+        },
+        body: buildPayloadsContainer(context, payloadStates[index],
+            mappedPayloads[launches[index].id] ?? [], () {
+          setState(() {
+            _loadPayloadsForLaunchIfNecessary(launches[index], index);
+          });
+        }),
+        isExpanded: expandedLaunchIds.contains(launches[index].id),
+      ),
+    );
+    return SingleChildScrollView(
+      child: ExpansionPanelList(
+        expansionCallback: (int index, bool isExpanded) {
+          setState(() {
+            if (!isExpanded) {
+              expandedLaunchIds.add(launches[index].id);
+            } else {
+              expandedLaunchIds.remove(launches[index].id);
+            }
+          });
+        },
+        children: items,
+      ),
     );
   }
 
@@ -180,7 +172,6 @@ class LaunchListPageState extends State<LaunchListPage> {
     );
   }
 
-  // pass states here
   Widget buildPayloadsContainer(BuildContext context, DataFetchState state,
       List<Payload> payloads, VoidCallback retryFetch) {
     if (state == DataFetchState.loading) {
